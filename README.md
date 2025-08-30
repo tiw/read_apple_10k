@@ -21,16 +21,18 @@ This tool analyzes XBRL files to count GAAP facts per context.
 ## Usage
 
 ```bash
-python main.py --file <path_to_xbrl_file> [--output <output_file>]
+python main.py --file <path_to_xbrl_file> [--output <output_file>] [--context-id <context_id>]
 ```
 
-Example:
+Examples:
 ```bash
+# Analyze all contexts and show fact counts
 python main.py --file 10k/aapl-20240928_htm.xml
-```
 
-To save the output to a file:
-```bash
+# List all facts for a specific context
+python main.py --file 10k/aapl-20240928_htm.xml --context-id c-1
+
+# Save output to a file
 python main.py --file 10k/aapl-20240928_htm.xml --output results.txt
 ```
 
@@ -49,6 +51,13 @@ The tool will display a table showing:
 - Fact Count: Number of GAAP facts associated with that context
 - Period: Time period the context covers (instant for point-in-time or period for durations)
 - Entity: The entity the context refers to (usually the company's CIK)
+
+## Detailed Context Analysis
+
+When using the `--context-id` option, the tool will list all facts associated with that specific context, including:
+- Tag Name: The name of the XBRL tag
+- Value: The value of the fact
+- Period information for the context
 
 ## Implementation Details
 
