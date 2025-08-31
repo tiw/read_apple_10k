@@ -3,7 +3,6 @@ Module for analyzing GAAP facts and their contexts in XBRL files
 """
 
 import xml.etree.ElementTree as ET
-from collections import defaultdict
 from tools.translation import FINANCIAL_TERMS
 
 
@@ -118,22 +117,34 @@ def list_facts_for_context(xbrl_file_path, context_id):
     tree = ET.parse(xbrl_file_path)
     root = tree.getroot()
     
-    # Namespace definitions
+    # Manually define common namespaces
     namespaces = {
-        'xbrli': 'http://www.xbrl.org/2003/instance',
-        'us-gaap': 'http://fasb.org/us-gaap/2024',
-        'dei': 'http://xbrl.sec.gov/dei/2024',
-        'xbrldi': 'http://xbrl.org/2006/xbrldi'
+        'http://www.xbrl.org/2003/instance': 'xbrli',
+        'http://xbrl.sec.gov/dei/2024': 'dei',
+        'http://fasb.org/us-gaap/2024': 'us-gaap',
+        'http://www.apple.com/20240928': 'aapl',
+        'http://xbrl.sec.gov/country/2024': 'country',
+        'http://xbrl.sec.gov/ecd/2024': 'ecd',
+        'http://www.xbrl.org/2003/iso4217': 'iso4217',
+        'http://fasb.org/srt/2024': 'srt',
+        'http://xbrl.org/2006/xbrldi': 'xbrldi'
     }
     
     # Collect facts for the specified context
     facts = []
     for elem in root.iter():
         if 'contextRef' in elem.attrib and elem.attrib['contextRef'] == context_id:
-            # Get the tag name without namespace
+            # Get the tag name and namespace
             tag_name = elem.tag
+            namespace = ""
             if tag_name.startswith('{'):
-                tag_name = tag_name.split('}', 1)[1]
+                # Handle namespaced elements like {http://www.apple.com/20240928}TagName
+                ns_uri, local_name = tag_name[1:].split('}', 1)
+                tag_name = local_name
+                namespace = namespaces.get(ns_uri, ns_uri.split('/')[-1])
+            else:
+                # Handle elements without namespace
+                namespace = ""
             
             # Get the value and unit (if available)
             value = elem.text if elem.text else ""
@@ -144,37 +155,43 @@ def list_facts_for_context(xbrl_file_path, context_id):
             
             facts.append({
                 'tag': tag_name,
+                'namespace': namespace,
                 'value': value,
                 'unit': unit_info
             })
     
     # Check if context exists
-    context_elem = root.find(f".//xbrli:context[@id='{context_id}']", namespaces)
-    if context_elem is None:
-        return f"Context ID '{context_id}' not found in the XBRL file."
-    
-    # Get context details
-    period_elem = context_elem.find('.//xbrli:period', namespaces)
+    context_found = False
     period_info = "No period info"
-    if period_elem is not None:
-        instant = period_elem.find('.//xbrli:instant', namespaces)
-        start_date = period_elem.find('.//xbrli:startDate', namespaces)
-        end_date = period_elem.find('.//xbrli:endDate', namespaces)
-        
-        if instant is not None:
-            period_info = f"Instant: {instant.text}"
-        elif start_date is not None and end_date is not None:
-            period_info = f"Period: {start_date.text} to {end_date.text}"
-        elif start_date is not None:
-            period_info = f"Start date: {start_date.text}"
-        elif end_date is not None:
-            period_info = f"End date: {end_date.text}"
+    
+    # Find context using explicit namespace handling
+    for context_elem in root.findall('.//{http://www.xbrl.org/2003/instance}context'):
+        if context_elem.attrib.get('id') == context_id:
+            context_found = True
+            period_elem = context_elem.find('.//{http://www.xbrl.org/2003/instance}period')
+            if period_elem is not None:
+                instant = period_elem.find('.//{http://www.xbrl.org/2003/instance}instant')
+                start_date = period_elem.find('.//{http://www.xbrl.org/2003/instance}startDate')
+                end_date = period_elem.find('.//{http://www.xbrl.org/2003/instance}endDate')
+                
+                if instant is not None:
+                    period_info = f"Instant: {instant.text}"
+                elif start_date is not None and end_date is not None:
+                    period_info = f"Period: {start_date.text} to {end_date.text}"
+                elif start_date is not None:
+                    period_info = f"Start date: {start_date.text}"
+                elif end_date is not None:
+                    period_info = f"End date: {end_date.text}"
+            break
+    
+    if not context_found:
+        return f"Context ID '{context_id}' not found in the XBRL file."
     
     # Format results
     result_lines = [f"Facts for Context ID: {context_id}"]
     result_lines.append(f"Period: {period_info}")
     result_lines.append("=" * 120)
-    result_lines.append(f"{'Tag Name':<50} {'Chinese Name':<40} {'Value':<30}")
+    result_lines.append(f"{'Namespace':<15} {'Tag Name':<35} {'Chinese Name':<40} {'Value':<30}")
     result_lines.append("-" * 120)
     
     for fact in facts:
@@ -183,7 +200,7 @@ def list_facts_for_context(xbrl_file_path, context_id):
         
         # Truncate long values
         value_display = fact['value'][:27] + "..." if len(fact['value']) > 30 else fact['value']
-        result_lines.append(f"{fact['tag']:<50} {chinese_name:<40} {value_display:<30}")
+        result_lines.append(f"{fact['namespace']:<15} {fact['tag']:<35} {chinese_name:<40} {value_display:<30}")
     
     result_lines.append("-" * 120)
     result_lines.append(f"Total Facts: {len(facts)}")
