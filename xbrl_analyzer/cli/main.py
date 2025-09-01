@@ -5,17 +5,17 @@ import sys
 import os
 
 # Add the tools directory to the path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'tools'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'tools'))
 
-from tools.context_analyzer import (
+from context_analyzer import (
     list_all_contexts, 
     list_facts_for_context, 
     list_facts_by_presentation,
     calculate_formulas
 )
-from tools.financial_statements import generate_financial_statements
-from tools.html_table_parser import extract_financial_data_from_html
-from tools.translation import FINANCIAL_TERMS
+from financial_statements import generate_financial_statements
+from html_table_parser import extract_financial_data_from_html
+from translation import FINANCIAL_TERMS
 
 def main():
     parser = argparse.ArgumentParser(description='Process XBRL files.')

@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from .translation import FINANCIAL_TERMS
+import translation
+
+FINANCIAL_TERMS = translation.FINANCIAL_TERMS
 
 def list_all_contexts(xbrl_file_path):
     """

@@ -1,8 +1,8 @@
 import xml.etree.ElementTree as ET
-from collections import defaultdict, OrderedDict
-import re
+from collections import defaultdict
+import translation
 
-from .translation import FINANCIAL_TERMS
+FINANCIAL_TERMS = translation.FINANCIAL_TERMS
 
 def parse_xsd(xsd_file_path):
     """
