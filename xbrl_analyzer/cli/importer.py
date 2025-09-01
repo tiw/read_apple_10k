@@ -28,10 +28,28 @@ def get_xbrl_file_info(xbrl_file_path):
     tree = ET.parse(xbrl_file_path)
     root = tree.getroot()
     
-    namespaces = {
-        'dei': 'http://xbrl.sec.gov/dei/2024',
-        'xbrli': 'http://www.xbrl.org/2003/instance'
-    }
+    # 动态提取命名空间
+    namespaces = {}
+    for elem in root.iter():
+        if elem.tag.startswith('{'):
+            ns_uri = elem.tag[1:].split('}')[0]
+            # 提取命名空间的后缀部分（例如从'http://xbrl.sec.gov/dei/2024'提取'dei'）
+            if '/' in ns_uri:
+                ns_suffix = ns_uri.split('/')[-1]
+                # 如果是dei命名空间，提取'dei'部分
+                if 'dei' in ns_uri:
+                    namespaces['dei'] = ns_uri
+                elif 'us-gaap' in ns_uri:
+                    namespaces['us-gaap'] = ns_uri
+                elif 'xbrli' in ns_uri:
+                    namespaces['xbrli'] = ns_uri
+                # 也可以通过其他方式提取命名空间
+    
+    # 备用命名空间定义
+    if 'dei' not in namespaces:
+        namespaces['dei'] = 'http://xbrl.sec.gov/dei/2024'
+    if 'xbrli' not in namespaces:
+        namespaces['xbrli'] = 'http://www.xbrl.org/2003/instance'
     
     file_info = {
         'file_path': xbrl_file_path,
