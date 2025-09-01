@@ -1,2 +1,2 @@
-# This is a placeholder requirements.txt file
-# The current implementation uses only standard Python libraries
+lxml
+requests
