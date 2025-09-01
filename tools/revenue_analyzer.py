@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict, OrderedDict
+from datetime import datetime
 
 def parse_xsd_for_products(xsd_file_path):
     """
@@ -146,17 +147,81 @@ def extract_product_revenue_from_instance(instance_file_path, context_id=None):
                     # Extract just the member name (e.g., aapl:IPhoneMember -> IPhoneMember)
                     if ':' in member_value:
                         member_name = member_value.split(':')[-1]
-                        product_revenue[member_name] = {
-                            'value': value,
-                            'contextRef': context_ref
-                        }
                     else:
-                        product_revenue[member_value] = {
-                            'value': value,
-                            'contextRef': context_ref
-                        }
+                        member_name = member_value
+                    
+                    # Get the period information for this context
+                    period_info = {}
+                    period_elem = context_elem.find('.//xbrli:period', namespaces)
+                    if period_elem is not None:
+                        start_date = period_elem.find('.//xbrli:startDate', namespaces)
+                        end_date = period_elem.find('.//xbrli:endDate', namespaces)
+                        instant = period_elem.find('.//xbrli:instant', namespaces)
+                        
+                        if start_date is not None and end_date is not None:
+                            period_info = {
+                                'start_date': start_date.text,
+                                'end_date': end_date.text
+                            }
+                        elif instant is not None:
+                            period_info = {
+                                'instant': instant.text
+                            }
+                    
+                    # Create revenue entry with period information
+                    revenue_entry = {
+                        'value': value,
+                        'contextRef': context_ref,
+                        'period': period_info
+                    }
+                    
+                    # If we already have an entry for this product, check if this one is more recent
+                    if member_name in product_revenue:
+                        # Compare periods to keep the most recent data
+                        existing_entry = product_revenue[member_name]
+                        if is_more_recent_period(period_info, existing_entry.get('period', {})):
+                            product_revenue[member_name] = revenue_entry
+                    else:
+                        product_revenue[member_name] = revenue_entry
     
     return product_revenue
+
+def is_more_recent_period(new_period, existing_period):
+    """
+    Determine if the new period is more recent than the existing period
+    
+    Args:
+        new_period (dict): New period information
+        existing_period (dict): Existing period information
+        
+    Returns:
+        bool: True if new period is more recent, False otherwise
+    """
+    try:
+        # Extract end dates for comparison
+        new_end_date = None
+        existing_end_date = None
+        
+        if 'end_date' in new_period:
+            new_end_date = datetime.strptime(new_period['end_date'], '%Y-%m-%d')
+        elif 'instant' in new_period:
+            new_end_date = datetime.strptime(new_period['instant'], '%Y-%m-%d')
+            
+        if 'end_date' in existing_period:
+            existing_end_date = datetime.strptime(existing_period['end_date'], '%Y-%m-%d')
+        elif 'instant' in existing_period:
+            existing_end_date = datetime.strptime(existing_period['instant'], '%Y-%m-%d')
+        
+        # If we have dates for both, compare them
+        if new_end_date and existing_end_date:
+            return new_end_date > existing_end_date
+        elif new_end_date:
+            return True
+        else:
+            return False
+    except (ValueError, KeyError):
+        # If we can't parse the dates, default to keeping the existing entry
+        return False
 
 def format_revenue_value(value):
     """
@@ -229,11 +294,22 @@ def analyze_revenue_by_product(instance_file_path, xsd_file_path, def_file_path,
     total_revenue = 0
     for product, info in product_revenue.items():
         value = info.get('value', 'N/A')
+        context_ref = info.get('contextRef', 'N/A')
+        period = info.get('period', {})
+        
         try:
             revenue_value = float(value)
             total_revenue += revenue_value
             formatted_value = format_revenue_value(value)
-            result_lines.append(f"  {product}: {formatted_value}")
+            
+            # Add period information to the output
+            period_str = ""
+            if 'end_date' in period:
+                period_str = f" (Period: {period.get('start_date', '')} to {period['end_date']})"
+            elif 'instant' in period:
+                period_str = f" (Instant: {period['instant']})"
+            
+            result_lines.append(f"  {product}: {formatted_value}{period_str} [{context_ref}]")
         except ValueError:
             result_lines.append(f"  {product}: {value}")
     

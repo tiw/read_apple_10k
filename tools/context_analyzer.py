@@ -27,6 +27,73 @@ def list_all_contexts(xbrl_file_path):
     
     return contexts
 
+def get_context_info(xbrl_file_path, context_id):
+    """
+    Get detailed information about a specific context.
+    
+    Args:
+        xbrl_file_path (str): Path to the XBRL file
+        context_id (str): Context ID to get information for
+        
+    Returns:
+        dict: Context information including period and dimensions
+    """
+    tree = ET.parse(xbrl_file_path)
+    root = tree.getroot()
+    
+    namespaces = {
+        'xbrli': 'http://www.xbrl.org/2003/instance',
+        'dei': 'http://xbrl.sec.gov/dei/2024',
+        'us-gaap': 'http://fasb.org/us-gaap/2024',
+        'aapl': 'http://www.apple.com/20240928',
+        'country': 'http://xbrl.sec.gov/country/2024',
+        'ecd': 'http://xbrl.sec.gov/ecd/2024',
+        'iso4217': 'http://www.xbrl.org/2003/iso4217',
+        'srt': 'http://fasb.org/srt/2024',
+        'xbrldi': 'http://xbrl.org/2006/xbrldi'
+    }
+    
+    # Check if context exists
+    context_found = False
+    context_info = {
+        'period_info': "No period info",
+        'dimensions': []
+    }
+    
+    for context_elem in root.findall('.//xbrli:context', namespaces):
+        if context_elem.attrib.get('id') == context_id:
+            context_found = True
+            period_elem = context_elem.find('.//xbrli:period', namespaces)
+            if period_elem is not None:
+                instant = period_elem.find('.//xbrli:instant', namespaces)
+                start_date = period_elem.find('.//xbrli:startDate', namespaces)
+                end_date = period_elem.find('.//xbrli:endDate', namespaces)
+                
+                if instant is not None:
+                    context_info['period_info'] = f"Instant: {instant.text}"
+                elif start_date is not None and end_date is not None:
+                    context_info['period_info'] = f"Period: {start_date.text} to {end_date.text}"
+                elif start_date is not None:
+                    context_info['period_info'] = f"Start date: {start_date.text}"
+                elif end_date is not None:
+                    context_info['period_info'] = f"End date: {end_date.text}"
+            
+            # Get dimension information
+            explicit_members = context_elem.findall('.//xbrldi:explicitMember', namespaces)
+            for member in explicit_members:
+                dimension = member.attrib.get('dimension', '')
+                member_value = member.text if member.text else ''
+                context_info['dimensions'].append({
+                    'dimension': dimension,
+                    'member': member_value
+                })
+            break
+    
+    if not context_found:
+        return None
+    
+    return context_info
+
 def list_facts_for_context(xbrl_file_path, context_id):
     """
     List all facts for a specific context ID.
@@ -38,6 +105,11 @@ def list_facts_for_context(xbrl_file_path, context_id):
     Returns:
         str: Formatted list of facts
     """
+    # Get context information
+    context_info = get_context_info(xbrl_file_path, context_id)
+    if context_info is None:
+        return f"Context ID '{context_id}' not found in the XBRL file."
+    
     tree = ET.parse(xbrl_file_path)
     root = tree.getroot()
     
@@ -53,32 +125,6 @@ def list_facts_for_context(xbrl_file_path, context_id):
         'srt': 'http://fasb.org/srt/2024',
         'xbrldi': 'http://xbrl.org/2006/xbrldi'
     }
-    
-    # Check if context exists
-    context_found = False
-    period_info = "No period info"
-    
-    for context_elem in root.findall('.//xbrli:context', namespaces):
-        if context_elem.attrib.get('id') == context_id:
-            context_found = True
-            period_elem = context_elem.find('.//xbrli:period', namespaces)
-            if period_elem is not None:
-                instant = period_elem.find('.//xbrli:instant', namespaces)
-                start_date = period_elem.find('.//xbrli:startDate', namespaces)
-                end_date = period_elem.find('.//xbrli:endDate', namespaces)
-                
-                if instant is not None:
-                    period_info = f"Instant: {instant.text}"
-                elif start_date is not None and end_date is not None:
-                    period_info = f"Period: {start_date.text} to {end_date.text}"
-                elif start_date is not None:
-                    period_info = f"Start date: {start_date.text}"
-                elif end_date is not None:
-                    period_info = f"End date: {end_date.text}"
-            break
-    
-    if not context_found:
-        return f"Context ID '{context_id}' not found in the XBRL file."
     
     # Collect facts for the specified context
     facts = []
@@ -102,7 +148,19 @@ def list_facts_for_context(xbrl_file_path, context_id):
     
     # Format results
     result_lines = [f"Facts for Context ID: {context_id}"]
-    result_lines.append(f"Period: {period_info}")
+    
+    # Add context information
+    result_lines.append(f"Period: {context_info['period_info']}")
+    
+    # Add dimension information if available
+    if context_info['dimensions']:
+        result_lines.append("Dimensions:")
+        for dim in context_info['dimensions']:
+            # Make dimension and member names more readable
+            dim_name = dim['dimension'].split(':')[-1] if ':' in dim['dimension'] else dim['dimension']
+            member_name = dim['member'].split(':')[-1] if ':' in dim['member'] else dim['member']
+            result_lines.append(f"  {dim_name}: {member_name}")
+    
     result_lines.append("=" * 80)
     result_lines.append(f"{'Tag Name':<40} {'Chinese Name':<30} {'Value':<20}")
     result_lines.append("-" * 80)
