@@ -90,12 +90,13 @@ def parse_definition_linkbase_for_revenue_structure(def_file_path):
     for arc in target_role_link.findall('.//link:definitionArc', namespaces):
         from_label = arc.get('{http://www.w3.org/1999/xlink}from')
         to_label = arc.get('{http://www.w3.org/1999/xlink}to')
+        order = arc.get('order')
         
         from_element = locators.get(from_label)
         to_element = locators.get(to_label)
         
         if from_element and to_element:
-            structure[from_element].append(to_element)
+            structure[from_element].append((to_element, order))
     
     return dict(structure)
 
@@ -284,7 +285,7 @@ def analyze_revenue_by_product(instance_file_path, xsd_file_path, def_file_path,
     result_lines.append("-" * 40)
     for parent, children in structure.items():
         result_lines.append(f"  {parent}:")
-        for child in children:
+        for child, order in children:
             result_lines.append(f"    - {child}")
     
     # Display revenue by product
@@ -292,14 +293,38 @@ def analyze_revenue_by_product(instance_file_path, xsd_file_path, def_file_path,
     result_lines.append("-" * 40)
     
     total_revenue = 0
+    product_total = 0
+    service_total = 0
+    
+    # Calculate totals based on specific product categories
+    for product, info in product_revenue.items():
+        value = info.get('value', 'N/A')
+        
+        try:
+            revenue_value = float(value)
+            
+            # Categorize revenue based on product type
+            if product in ['IPhoneMember', 'MacMember', 'IPadMember', 'WearablesHomeandAccessoriesMember']:
+                product_total += revenue_value
+            elif product in ['ServiceMember']:
+                service_total += revenue_value
+            elif product in ['ProductMember']:
+                # This is the total of all products, so we don't add it to product_total
+                # to avoid double counting
+                pass
+                
+            total_revenue += revenue_value
+            
+        except ValueError:
+            pass
+    
+    # Display individual product revenues
     for product, info in product_revenue.items():
         value = info.get('value', 'N/A')
         context_ref = info.get('contextRef', 'N/A')
         period = info.get('period', {})
         
         try:
-            revenue_value = float(value)
-            total_revenue += revenue_value
             formatted_value = format_revenue_value(value)
             
             # Add period information to the output
@@ -313,11 +338,11 @@ def analyze_revenue_by_product(instance_file_path, xsd_file_path, def_file_path,
         except ValueError:
             result_lines.append(f"  {product}: {value}")
     
-    # Add total revenue
-    if total_revenue > 0:
-        formatted_total = format_revenue_value(str(total_revenue))
-        result_lines.append("-" * 40)
-        result_lines.append(f"  Total Revenue: {formatted_total}")
+    # Add totals
+    result_lines.append("-" * 40)
+    result_lines.append(f"  Product Total (IPhone+Mac+IPad+Wearables): {format_revenue_value(str(product_total))}")
+    result_lines.append(f"  Service Total: {format_revenue_value(str(service_total))}")
+    result_lines.append(f"  Grand Total: {format_revenue_value(str(product_total + service_total))}")
     
     result_lines.append("")
     result_lines.append(f"Total product revenue items: {len(product_revenue)}")
