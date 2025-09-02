@@ -1,17 +1,19 @@
-#!/usr/bin/env python3
-
 import argparse
+import json
 import os
-import requests
+import re
 import sys
-from typing import Optional
+
+import requests
+
 
 # 添加项目根目录到Python路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from xbrl_analyzer.tools.ticker_utils import get_cik_by_ticker
 
-def download_xbrl_files(ticker: str, year: Optional[int] = None, output_dir: str = "./10k_xbrl"):
+
+def download_xbrl_files(ticker: str, year=None, output_dir: str = "./10k_xbrl"):
     """
     从SEC EDGAR下载特定公司和年份的10-K XBRL文件
     
@@ -67,77 +69,106 @@ def download_xbrl_files(ticker: str, year: Optional[int] = None, output_dir: str
             
         accession_number = accession_numbers[target_index]
         report_date = report_dates[target_index]
-        print(f"找到{'最新的' if year is None else str(year) + '年的'}10-K文件: {accession_number} (报告日期: {report_date})")
+        print(f"找到{'最新的' if year is None else str(year) + '年的'}10-K文件: "
+              f"{accession_number} (报告日期: {report_date})")
         
         # 构建文件URL
         formatted_accession = accession_number.replace("-", "")
-        base_url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{formatted_accession}"
+        base_url = (f"https://www.sec.gov/Archives/edgar/data/"
+                   f"{int(cik)}/{formatted_accession}")
         
-        # 获取目录列表以确定确切的文件名
+        # 首先尝试使用MetaLinks.json获取确切的文件名
+        files_to_download = []
+        meta_links_url = f"{base_url}/MetaLinks.json"
+        
         try:
-            listing_response = requests.get(f"{base_url}/", headers=headers)
-            listing_response.raise_for_status()
-            listing_content = listing_response.text
+            print(f"正在获取MetaLinks.json: {meta_links_url}")
+            meta_response = requests.get(meta_links_url, headers=headers, timeout=30)
+            meta_response.raise_for_status()
+            meta_data = meta_response.json()
             
-            # 从目录中提取确切的文件名
-            import re
-            filename_patterns = [
-                rf'({ticker.lower()}-\d{{8}}\.xsd)',
-                rf'({ticker.lower()}-\d{{8}}_cal\.xml)',
-                rf'({ticker.lower()}-\d{{8}}_def\.xml)',
-                rf'({ticker.lower()}-\d{{8}}_lab\.xml)',
-                rf'({ticker.lower()}-\d{{8}}_pre\.xml)',
-                rf'({ticker.lower()}-\d{{8}}_htm\.xml)',
-                rf'({ticker.lower()}_\d{{8}}\.xsd)',
-                rf'({ticker.lower()}_\d{{8}}_cal\.xml)',
-                rf'({ticker.lower()}_\d{{8}}_def\.xml)',
-                rf'({ticker.lower()}_\d{{8}}_lab\.xml)',
-                rf'({ticker.lower()}_\d{{8}}_pre\.xml)',
-                rf'({ticker.lower()}_\d{{8}}_htm\.xml)',
-            ]
+            # 从MetaLinks.json中获取实例文档
+            instance_files = meta_data.get('instance', {})
+            for filename in instance_files.keys():
+                # 将.htm文件转换为_htm.xml格式
+                if filename.endswith('.htm'):
+                    xml_filename = filename.replace('.htm', '_htm.xml')
+                    files_to_download.append(xml_filename)
+                else:
+                    files_to_download.append(filename)
             
-            files_found = []
-            for pattern in filename_patterns:
-                matches = re.findall(pattern, listing_content)
-                files_found.extend(matches)
+            # 获取其他链接库文件
+            presentation_files = meta_data.get('presentation', {}).keys()
+            files_to_download.extend(presentation_files)
             
-            # 去重并过滤
-            files_found = list(set(files_found))
+            calculation_files = meta_data.get('calculation', {}).keys()
+            files_to_download.extend(calculation_files)
             
-            # 分类文件
-            xsd_files = [f for f in files_found if f.endswith('.xsd')]
-            xml_files = [f for f in files_found if f.endswith('.xml')]
+            definition_files = meta_data.get('definition', {}).keys()
+            files_to_download.extend(definition_files)
             
-            # 确保有正确的文件
-            if not xsd_files:
-                print("未找到XSD文件，使用默认命名")
-                # 使用默认命名规则
-                filing_date = report_dates[target_index].replace("-", "")
-                files_to_download = [
-                    f"{ticker.lower()}-{filing_date}.xsd",
-                    f"{ticker.lower()}-{filing_date}_cal.xml",
-                    f"{ticker.lower()}-{filing_date}_def.xml",
-                    f"{ticker.lower()}-{filing_date}_lab.xml",
-                    f"{ticker.lower()}-{filing_date}_pre.xml",
-                    f"{ticker.lower()}-{filing_date}_htm.xml",
+            label_files = meta_data.get('label', {}).keys()
+            files_to_download.extend(label_files)
+            
+            # 获取schema文件
+            schema_files = meta_data.get('schema', {}).keys()
+            files_to_download.extend(schema_files)
+            
+            print(f"从MetaLinks.json获取到 {len(files_to_download)} 个文件")
+            
+            # 检查是否获取到关键文件
+            instance_files_count = len([f for f in files_to_download if '_htm.xml' in f])
+            if instance_files_count == 0:
+                print("警告: 未找到实例文档文件")
+                
+        except requests.exceptions.RequestException as e:
+            print(f"网络错误，无法获取MetaLinks.json: {e}")
+            print("尝试直接从目录中解析文件...")
+            
+            # 直接从目录中获取文件列表
+            try:
+                directory_url = f"{base_url}/"
+                directory_response = requests.get(directory_url, headers=headers, timeout=30)
+                directory_response.raise_for_status()
+                directory_content = directory_response.text
+                
+                # 通过解析HTML目录内容获取文件链接
+                import re
+                # 匹配XBRL相关文件
+                file_patterns = [
+                    rf'({ticker.lower()}-\d{{8}}\.xsd)',
+                    rf'({ticker.lower()}-\d{{8}}_cal\.xml)',
+                    rf'({ticker.lower()}-\d{{8}}_def\.xml)',
+                    rf'({ticker.lower()}-\d{{8}}_lab\.xml)',
+                    rf'({ticker.lower()}-\d{{8}}_pre\.xml)',
+                    rf'({ticker.lower()}-\d{{8}}\.xml)',  # 实例文档
+                    rf'({ticker.lower()}_\d{{8}}\.xsd)',
+                    rf'({ticker.lower()}_\d{{8}}_cal\.xml)',
+                    rf'({ticker.lower()}_\d{{8}}_def\.xml)',
+                    rf'({ticker.lower()}_\d{{8}}_lab\.xml)',
+                    rf'({ticker.lower()}_\d{{8}}_pre\.xml)',
+                    rf'({ticker.lower()}_\d{{8}}\.xml)',  # 实例文档
                 ]
-            else:
-                # 只保留最多6个XML文件 (cal, def, lab, pre, htm等)
-                xml_files = xml_files[:6] 
-                files_to_download = xsd_files[:1] + xml_files  # 1个XSD + 最多6个XML
-            
+                
+                files_found = []
+                for pattern in file_patterns:
+                    matches = re.findall(pattern, directory_content, re.IGNORECASE)
+                    files_found.extend(matches)
+                
+                # 去重
+                files_to_download = list(set(files_found))
+                print(f"从目录中找到 {len(files_to_download)} 个文件")
+                
+            except Exception as dir_error:
+                print(f"从目录中解析文件也失败了: {dir_error}")
+                return False
+                
+        except json.JSONDecodeError as e:
+            print(f"JSON解析错误，MetaLinks.json格式不正确: {e}")
+            return False
         except Exception as e:
-            print(f"无法获取目录列表: {e}")
-            # 使用默认命名规则
-            filing_date = report_dates[target_index].replace("-", "")
-            files_to_download = [
-                f"{ticker.lower()}-{filing_date}.xsd",
-                f"{ticker.lower()}-{filing_date}_cal.xml",
-                f"{ticker.lower()}-{filing_date}_def.xml",
-                f"{ticker.lower()}-{filing_date}_lab.xml",
-                f"{ticker.lower()}-{filing_date}_pre.xml",
-                f"{ticker.lower()}-{filing_date}_htm.xml",
-            ]
+            print(f"处理MetaLinks.json时发生未知错误: {e}")
+            return False
         
         # 下载文件
         downloaded_files = []
@@ -147,7 +178,7 @@ def download_xbrl_files(ticker: str, year: Optional[int] = None, output_dir: str
             
             print(f"正在下载 {file_url}")
             try:
-                file_response = requests.get(file_url, headers=headers)
+                file_response = requests.get(file_url, headers=headers, timeout=30)
                 file_response.raise_for_status()
                 
                 with open(output_path, "wb") as f:
@@ -169,11 +200,13 @@ def download_xbrl_files(ticker: str, year: Optional[int] = None, output_dir: str
         print(f"获取提交信息时出错: {e}")
         return False
 
+
 def main():
     parser = argparse.ArgumentParser(description="从SEC EDGAR下载10-K XBRL文件")
     parser.add_argument("--ticker", required=True, help="公司股票代码 (例如: AAPL)")
     parser.add_argument("--year", type=int, help="报告年份 (可选)")
-    parser.add_argument("--output-dir", default="./10k_xbrl", help="输出目录 (默认: ./10k_xbrl)")
+    parser.add_argument("--output-dir", default="./10k_xbrl", 
+                       help="输出目录 (默认: ./10k_xbrl)")
     
     args = parser.parse_args()
     
@@ -185,6 +218,7 @@ def main():
     
     if not success:
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

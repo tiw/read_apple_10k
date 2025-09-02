@@ -10,10 +10,13 @@ import subprocess
 import sys
 from datetime import datetime
 
-# 美股七朵金花股票代码
+# 获取当前年份
+CURRENT_YEAR = datetime.now().year
+
+# 美股七朵金花股票代码和公司名称
 MAGNIFICENT_SEVEN = {
     "AAPL": "Apple",
-    "MSFT": "Microsoft", 
+    "MSFT": "Microsoft",
     "GOOGL": "Alphabet",
     "AMZN": "Amazon",
     "TSLA": "Tesla",
@@ -21,9 +24,16 @@ MAGNIFICENT_SEVEN = {
     "META": "Meta"
 }
 
-# 近十年
-CURRENT_YEAR = datetime.now().year
-YEARS = list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1))  # 近十年
+# 根据各公司实际情况调整年份范围
+COMPANY_YEAR_RANGES = {
+    "AAPL": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
+    "MSFT": list(range(2019, CURRENT_YEAR + 1)),  # MSFT从2019年开始有数据
+    "GOOGL": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
+    "AMZN": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
+    "TSLA": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
+    "NVDA": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
+    "META": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1))
+}
 
 def download_company_files(ticker, company_name):
     """
@@ -39,7 +49,10 @@ def download_company_files(ticker, company_name):
     os.makedirs(company_dir, exist_ok=True)
     
     success_count = 0
-    for year in YEARS:
+    # 使用针对各公司的年份范围
+    years = COMPANY_YEAR_RANGES.get(ticker, list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)))
+    
+    for year in years:
         year_dir = os.path.join(company_dir, str(year))
         
         # 检查是否已经下载过该年份的文件
@@ -69,7 +82,7 @@ def download_company_files(ticker, company_name):
         except Exception as e:
             print(f"    {year} 年文件下载出错: {e}")
     
-    print(f"  {company_name} 完成 {success_count}/{len(YEARS)} 年的下载")
+    print(f"  {company_name} 完成 {success_count}/{len(years)} 年的下载")
     return success_count
 
 def main():
@@ -84,8 +97,6 @@ def main():
     
     # 记录总体统计
     total_companies = len(MAGNIFICENT_SEVEN)
-    total_years = len(YEARS)
-    total_possible = total_companies * total_years
     total_success = 0
     
     # 逐个下载每个公司的文件
@@ -100,10 +111,8 @@ def main():
     print("\n" + "=" * 50)
     print("下载完成总结:")
     print(f"公司数量: {total_companies}")
-    print(f"年份范围: {YEARS[0]} - {YEARS[-1]}")
-    print(f"总计尝试下载: {total_possible} 个文件")
-    print(f"成功下载: {total_success} 个文件")
-    print(f"成功率: {total_success/total_possible*100:.1f}%")
+    print(f"年份范围: {COMPANY_YEAR_RANGES[ticker][0]} - {COMPANY_YEAR_RANGES[ticker][-1]}")
+    print(f"总计成功下载: {total_success} 个文件")
 
 if __name__ == "__main__":
     main()
