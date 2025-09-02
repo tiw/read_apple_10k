@@ -35,6 +35,28 @@ COMPANY_YEAR_RANGES = {
     "META": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1))
 }
 
+def move_sec_files_to_root(year_dir):
+    """
+    将SEC下载器创建的多层目录中的文件移动到年份目录的根目录
+    """
+    sec_filings_dir = os.path.join(year_dir, "sec-edgar-filings")
+    if os.path.exists(sec_filings_dir):
+        # 查找所有文件
+        for root, dirs, files in os.walk(sec_filings_dir):
+            for file in files:
+                src_path = os.path.join(root, file)
+                dst_path = os.path.join(year_dir, file)
+                
+                # 移动文件到年份目录根目录
+                os.rename(src_path, dst_path)
+                print(f"      移动文件: {file} -> {year_dir}")
+        
+        # 删除空的SEC目录结构
+        import shutil
+        shutil.rmtree(sec_filings_dir)
+        print(f"      清理SEC目录结构")
+
+
 def download_company_files(ticker, company_name):
     """
     下载单个公司的近十年10-K文件
@@ -63,8 +85,8 @@ def download_company_files(ticker, company_name):
             
         print(f"  正在下载 {year} 年的文件...")
         
-        # 调用现有的下载器脚本
-        cmd = [
+        # 首先尝试使用 XBRL 下载器
+        cmd_xbrl = [
             "python3", 
             "xbrl_analyzer/tools/sec_10k_downloader.py",
             "--ticker", ticker,
@@ -73,14 +95,54 @@ def download_company_files(ticker, company_name):
         ]
         
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=".")
+            result = subprocess.run(cmd_xbrl, capture_output=True, text=True, cwd=".")
             if result.returncode == 0:
                 print(f"    {year} 年文件下载成功")
                 success_count += 1
             else:
-                print(f"    {year} 年文件下载失败: {result.stderr}")
+                print(f"    XBRL下载器失败，尝试使用SEC下载器...")
+                # 如果XBRL下载器失败，尝试使用SEC下载器
+                cmd_sec = [
+                    "python3",
+                    "xbrl_analyzer/tools/sec_edgar_downloader_tool.py",
+                    "--ticker", ticker,
+                    "--year", str(year),
+                    "--output-dir", year_dir
+                ]
+                result_sec = subprocess.run(cmd_sec, capture_output=True, text=True, cwd=".")
+                if result_sec.returncode == 0:
+                    print(f"    {year} 年文件下载成功 (使用SEC下载器)")
+                    success_count += 1
+                    # 移动SEC下载的文件到当前目录
+                    move_sec_files_to_root(year_dir)
+                else:
+                    print(f"    SEC下载器也失败: {result_sec.stderr}")
         except Exception as e:
             print(f"    {year} 年文件下载出错: {e}")
+    
+    # 检查下载结果，如果目录仍然为空，使用SEC下载器重试
+    for year in years:
+        year_dir = os.path.join(company_dir, str(year))
+        if os.path.exists(year_dir) and not os.listdir(year_dir):
+            print(f"  {year} 年目录为空，使用SEC下载器重试...")
+            cmd_sec = [
+                "python3",
+                "xbrl_analyzer/tools/sec_edgar_downloader_tool.py",
+                "--ticker", ticker,
+                "--year", str(year),
+                "--output-dir", year_dir
+            ]
+            try:
+                result_sec = subprocess.run(cmd_sec, capture_output=True, text=True, cwd=".")
+                if result_sec.returncode == 0:
+                    print(f"    {year} 年文件下载成功 (重试)")
+                    success_count += 1
+                    # 移动SEC下载的文件到当前目录
+                    move_sec_files_to_root(year_dir)
+                else:
+                    print(f"    重试失败: {result_sec.stderr}")
+            except Exception as e:
+                print(f"    重试出错: {e}")
     
     print(f"  {company_name} 完成 {success_count}/{len(years)} 年的下载")
     return success_count
