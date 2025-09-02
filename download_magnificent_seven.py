@@ -27,7 +27,7 @@ MAGNIFICENT_SEVEN = {
 # 根据各公司实际情况调整年份范围
 COMPANY_YEAR_RANGES = {
     "AAPL": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
-    "MSFT": list(range(2019, CURRENT_YEAR + 1)),  # MSFT从2019年开始有数据
+    "MSFT": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)), 
     "GOOGL": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
     "AMZN": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
     "TSLA": list(range(CURRENT_YEAR - 9, CURRENT_YEAR + 1)),
