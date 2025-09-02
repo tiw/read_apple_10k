@@ -36,6 +36,7 @@ def download_xbrl_files(ticker: str, year=None, output_dir: str = "./10k_xbrl"):
     
     # 获取最新的10-K文件信息
     submissions_url = f"https://data.sec.gov/submissions/CIK{cik.zfill(10)}.json"
+    print(submissions_url)
     headers = {
         "User-Agent": "XBRL Analyzer (lingma@example.com)"
     }
@@ -80,6 +81,7 @@ def download_xbrl_files(ticker: str, year=None, output_dir: str = "./10k_xbrl"):
         # 首先尝试使用MetaLinks.json获取确切的文件名
         files_to_download = []
         meta_links_url = f"{base_url}/MetaLinks.json"
+        print(meta_links_url)
         
         try:
             print(f"正在获取MetaLinks.json: {meta_links_url}")
@@ -89,30 +91,36 @@ def download_xbrl_files(ticker: str, year=None, output_dir: str = "./10k_xbrl"):
             
             # 从MetaLinks.json中获取实例文档
             instance_files = meta_data.get('instance', {})
-            for filename in instance_files.keys():
+            for filename, instance_info in instance_files.items():
                 # 将.htm文件转换为_htm.xml格式
                 if filename.endswith('.htm'):
                     xml_filename = filename.replace('.htm', '_htm.xml')
                     files_to_download.append(xml_filename)
                 else:
                     files_to_download.append(filename)
-            
-            # 获取其他链接库文件
-            presentation_files = meta_data.get('presentation', {}).keys()
-            files_to_download.extend(presentation_files)
-            
-            calculation_files = meta_data.get('calculation', {}).keys()
-            files_to_download.extend(calculation_files)
-            
-            definition_files = meta_data.get('definition', {}).keys()
-            files_to_download.extend(definition_files)
-            
-            label_files = meta_data.get('label', {}).keys()
-            files_to_download.extend(label_files)
-            
-            # 获取schema文件
-            schema_files = meta_data.get('schema', {}).keys()
-            files_to_download.extend(schema_files)
+                
+                # 从实例信息的dts部分获取各种链接库文件
+                dts = instance_info.get('dts', {})
+                
+                # 获取calculationLink文件
+                calculation_files = dts.get('calculationLink', {}).get('local', [])
+                files_to_download.extend(calculation_files)
+                
+                # 获取definitionLink文件
+                definition_files = dts.get('definitionLink', {}).get('local', [])
+                files_to_download.extend(definition_files)
+                
+                # 获取labelLink文件
+                label_files = dts.get('labelLink', {}).get('local', [])
+                files_to_download.extend(label_files)
+                
+                # 获取presentationLink文件
+                presentation_files = dts.get('presentationLink', {}).get('local', [])
+                files_to_download.extend(presentation_files)
+                
+                # 获取schema文件
+                schema_files = dts.get('schema', {}).get('local', [])
+                files_to_download.extend(schema_files)
             
             print(f"从MetaLinks.json获取到 {len(files_to_download)} 个文件")
             
