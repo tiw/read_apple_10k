@@ -16,7 +16,7 @@ def import_company_data(db_path, company_ticker):
         db_path (str): 数据库路径
         company_ticker (str): 公司股票代码
     """
-    company_dir = os.path.join("magnificent_seven_data", company_ticker)
+    company_dir = os.path.join("magnificent_seven_10k_optimized", company_ticker)
     if not os.path.exists(company_dir):
         print(f"警告: 公司目录 {company_dir} 不存在，跳过...")
         return 0
@@ -30,14 +30,22 @@ def import_company_data(db_path, company_ticker):
         year_dir = os.path.join(company_dir, year)
         htm_file = None
         
-        # 查找XBRL HTM文件
+        # 查找XBRL文件 - 优先查找 _htm.xml 文件，其次查找 .xml 文件
+        htm_file = None
         for file_name in os.listdir(year_dir):
             if file_name.endswith('_htm.xml'):
                 htm_file = os.path.join(year_dir, file_name)
                 break
         
+        # 如果没找到 _htm.xml 文件，查找普通的 .xml 文件
         if not htm_file:
-            print(f"  警告: {company_ticker} {year} 年找不到XBRL HTM文件，跳过...")
+            for file_name in os.listdir(year_dir):
+                if file_name.endswith('.xml') and not file_name.endswith('_cal.xml') and not file_name.endswith('_def.xml') and not file_name.endswith('_lab.xml') and not file_name.endswith('_pre.xml') and file_name != 'FilingSummary.xml':
+                    htm_file = os.path.join(year_dir, file_name)
+                    break
+        
+        if not htm_file:
+            print(f"  警告: {company_ticker} {year} 年找不到XBRL文件，跳过...")
             continue
         
         print(f"  正在导入 {company_ticker} {year} 年数据...")
