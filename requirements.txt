@@ -1,3 +1,4 @@
 lxml
 requests
 sec_edgar_downloader
+duckdb
