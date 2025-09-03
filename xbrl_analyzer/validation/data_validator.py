@@ -375,9 +375,17 @@ class XBRLDataValidator:
         assets = self._get_value(financial_facts, 'Assets')
         liabilities = self._get_value(financial_facts, 'Liabilities')
         equity = self._get_value(financial_facts, 'StockholdersEquity')
+        commitments = self._get_value(financial_facts, 'CommitmentsAndContingencies') or 0
         
-        if all(val is not None for val in [assets, liabilities, equity]):
-            return abs(assets - (liabilities + equity)) / abs(assets) <= self.tolerance
+        # 首先检查是否有LiabilitiesAndStockholdersEquity字段
+        liabilities_and_equity = self._get_value(financial_facts, 'LiabilitiesAndStockholdersEquity')
+        
+        if liabilities_and_equity is not None and assets is not None:
+            # 如果有LiabilitiesAndStockholdersEquity字段，直接与Assets比较
+            return abs(assets - liabilities_and_equity) / abs(assets) <= self.tolerance
+        elif all(val is not None for val in [assets, liabilities, equity]):
+            # 如果没有LiabilitiesAndStockholdersEquity字段，使用标准公式
+            return abs(assets - (liabilities + commitments + equity)) / abs(assets) <= self.tolerance
         return False
     
     def _get_value(self, financial_facts: Dict[str, Any], metric_name: str) -> Optional[float]:
