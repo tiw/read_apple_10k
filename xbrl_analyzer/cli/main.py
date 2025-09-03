@@ -47,9 +47,37 @@ def main():
             print("Error: --file is required when using --list-contexts")
             sys.exit(1)
         contexts = list_all_contexts(args.file)
-        print("Available Contexts:")
+        print("Available Contexts (Context ID, Period, Unique Facts Count):")
         for context in contexts:
-            print(f"  {context}")
+            facts = list_facts_for_context(args.file, context)
+            # Deduplicate facts by their unique identifiers (e.g., fact ID or content)
+            unique_facts = set(facts)  # Assuming facts are strings or can be uniquely identified
+            # Parse period from context XML
+            try:
+                import xml.etree.ElementTree as ET
+                tree = ET.parse(args.file)
+                root = tree.getroot()
+                ns = {'xbrli': 'http://www.xbrl.org/2003/instance'}
+                context_node = root.find(f".//xbrli:context[@id='{context}']", ns)
+                if context_node is not None:
+                    period_node = context_node.find('xbrli:period', ns)
+                    if period_node is not None:
+                        start_date = period_node.find('xbrli:startDate', ns)
+                        end_date = period_node.find('xbrli:endDate', ns)
+                        instant_date = period_node.find('xbrli:instant', ns)
+                        if start_date is not None and end_date is not None:
+                            period = f"{start_date.text} to {end_date.text}"
+                        elif instant_date is not None:
+                            period = f"Instant: {instant_date.text}"
+                        else:
+                            period = "N/A"
+                    else:
+                        period = "N/A"
+                else:
+                    period = "N/A"
+            except Exception as e:
+                period = f"Error: {str(e)}"
+            print(f"  {context}, {period}, {len(unique_facts)}")
         return
     
     if args.generate_statements:
