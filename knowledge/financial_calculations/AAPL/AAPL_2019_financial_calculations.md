@@ -1,0 +1,333 @@
+# AAPL 2019 财务计算逻辑分析
+
+## 其他计算逻辑 (Other Calculations)
+
+### CommitmentsAndContingenciesFutureMinimumLeasePaymentsUnderNoncancelableOperatingLeasesDetails
+
+#### us-gaap_OperatingLeasesFutureMinimumPaymentsDue
+
+- us-gaap_OperatingLeasesFutureMinimumPaymentsDue + us-gaap_OperatingLeasesFutureMinimumPaymentsDueCurrent
+- us-gaap_OperatingLeasesFutureMinimumPaymentsDue + us-gaap_OperatingLeasesFutureMinimumPaymentsDueInTwoYears
+- us-gaap_OperatingLeasesFutureMinimumPaymentsDue + us-gaap_OperatingLeasesFutureMinimumPaymentsDueInThreeYears
+- us-gaap_OperatingLeasesFutureMinimumPaymentsDue + us-gaap_OperatingLeasesFutureMinimumPaymentsDueInFourYears
+- us-gaap_OperatingLeasesFutureMinimumPaymentsDue + us-gaap_OperatingLeasesFutureMinimumPaymentsDueInFiveYears
+- us-gaap_OperatingLeasesFutureMinimumPaymentsDue + us-gaap_OperatingLeasesFutureMinimumPaymentsDueThereafter
+
+### CommitmentsAndContingenciesFuturePaymentsUnderUnconditionalPurchaseObligationsDetails
+
+#### us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount
+
+- us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount + us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceOnFirstAnniversary
+- us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount + us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceOnSecondAnniversary
+- us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount + us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceOnThirdAnniversary
+- us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount + us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceOnFourthAnniversary
+- us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount + us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceOnFifthAnniversary
+- us-gaap_UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount + us-gaap_UnrecordedUnconditionalPurchaseObligationDueAfterFiveYears
+
+### ConsolidatedFinancialStatementDetailsOtherNonCurrentLiabilitiesDetails
+
+#### us-gaap_OtherLiabilitiesNoncurrent
+
+- us-gaap_OtherLiabilitiesNoncurrent + us-gaap_AccruedIncomeTaxesNoncurrent
+- us-gaap_OtherLiabilitiesNoncurrent + us-gaap_OtherAccruedLiabilitiesNoncurrent
+
+### ConsolidatedFinancialStatementDetailsPropertyPlantAndEquipmentNetDetails
+
+#### us-gaap_PropertyPlantAndEquipmentNet
+
+- us-gaap_PropertyPlantAndEquipmentNet + us-gaap_PropertyPlantAndEquipmentGross
+- us-gaap_PropertyPlantAndEquipmentNet - us-gaap_AccumulatedDepreciationDepletionAndAmortizationPropertyPlantAndEquipment
+
+### DebtFuturePrincipalPaymentsForTermDebtDetails
+
+#### us-gaap_DebtInstrumentCarryingAmount
+
+- us-gaap_DebtInstrumentCarryingAmount + us-gaap_LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths
+- us-gaap_DebtInstrumentCarryingAmount + us-gaap_LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo
+- us-gaap_DebtInstrumentCarryingAmount + us-gaap_LongTermDebtMaturitiesRepaymentsOfPrincipalInYearThree
+- us-gaap_DebtInstrumentCarryingAmount + us-gaap_LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFour
+- us-gaap_DebtInstrumentCarryingAmount + us-gaap_LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFive
+- us-gaap_DebtInstrumentCarryingAmount + us-gaap_LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive
+
+## 损益表计算逻辑 (Income Statement Calculations)
+
+### ComprehensiveIncomeChangeInAociByComponentDetails
+
+#### us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent
+
+- us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent + us-gaap_OciBeforeReclassificationsBeforeTaxAttributableToParent
+- us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent - us-gaap_ReclassificationFromAociCurrentPeriodBeforeTaxAttributableToParent
+- us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent - us-gaap_OtherComprehensiveIncomeLossTaxPortionAttributableToParent1
+
+### ConsolidatedFinancialStatementDetailsOtherIncomeExpenseNetDetails
+
+#### us-gaap_NonoperatingIncomeExpense
+
+- us-gaap_NonoperatingIncomeExpense + us-gaap_InvestmentIncomeInterestAndDividend
+- us-gaap_NonoperatingIncomeExpense - us-gaap_InterestExpense
+- us-gaap_NonoperatingIncomeExpense + us-gaap_OtherNonoperatingIncomeExpense
+
+### ConsolidatedStatementsOfComprehensiveIncome
+
+#### us-gaap_ComprehensiveIncomeNetOfTax
+
+- us-gaap_ComprehensiveIncomeNetOfTax + us-gaap_NetIncomeLoss
+- us-gaap_ComprehensiveIncomeNetOfTax + us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent
+
+#### us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent
+
+- us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent + us-gaap_OtherComprehensiveIncomeLossForeignCurrencyTransactionAndTranslationAdjustmentNetOfTax
+- us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent + us-gaap_OtherComprehensiveIncomeLossDerivativesQualifyingAsHedgesNetOfTax
+- us-gaap_OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent + us-gaap_OtherComprehensiveIncomeLossAvailableForSaleSecuritiesAdjustmentNetOfTax
+
+#### us-gaap_OtherComprehensiveIncomeLossDerivativesQualifyingAsHedgesNetOfTax
+
+- us-gaap_OtherComprehensiveIncomeLossDerivativesQualifyingAsHedgesNetOfTax + us-gaap_OtherComprehensiveIncomeUnrealizedGainLossOnDerivativesArisingDuringPeriodNetOfTax
+- us-gaap_OtherComprehensiveIncomeLossDerivativesQualifyingAsHedgesNetOfTax - us-gaap_OtherComprehensiveIncomeLossReclassificationAdjustmentFromAOCIOnDerivativesNetOfTax
+
+#### us-gaap_OtherComprehensiveIncomeLossAvailableForSaleSecuritiesAdjustmentNetOfTax
+
+- us-gaap_OtherComprehensiveIncomeLossAvailableForSaleSecuritiesAdjustmentNetOfTax + us-gaap_OtherComprehensiveIncomeUnrealizedHoldingGainLossOnSecuritiesArisingDuringPeriodNetOfTax
+- us-gaap_OtherComprehensiveIncomeLossAvailableForSaleSecuritiesAdjustmentNetOfTax - us-gaap_OtherComprehensiveIncomeLossReclassificationAdjustmentFromAOCIForSaleOfSecuritiesNetOfTax
+
+### ConsolidatedStatementsOfOperations
+
+#### us-gaap_NetIncomeLoss
+
+- us-gaap_NetIncomeLoss + us-gaap_IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest
+- us-gaap_NetIncomeLoss - us-gaap_IncomeTaxExpenseBenefit
+
+#### us-gaap_IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest
+
+- us-gaap_IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest + us-gaap_OperatingIncomeLoss
+- us-gaap_IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest + us-gaap_NonoperatingIncomeExpense
+
+#### us-gaap_OperatingIncomeLoss
+
+- us-gaap_OperatingIncomeLoss + us-gaap_GrossProfit
+- us-gaap_OperatingIncomeLoss - us-gaap_OperatingExpenses
+
+#### us-gaap_GrossProfit
+
+- us-gaap_GrossProfit + us-gaap_RevenueFromContractWithCustomerExcludingAssessedTax
+- us-gaap_GrossProfit - us-gaap_CostOfGoodsAndServicesSold
+
+#### us-gaap_OperatingExpenses
+
+- us-gaap_OperatingExpenses + us-gaap_ResearchAndDevelopmentExpense
+- us-gaap_OperatingExpenses + us-gaap_SellingGeneralAndAdministrativeExpense
+
+### IncomeTaxesProvisionForIncomeTaxesDetails
+
+#### us-gaap_IncomeTaxExpenseBenefit
+
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_FederalIncomeTaxExpenseBenefitContinuingOperations
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_StateAndLocalIncomeTaxExpenseBenefitContinuingOperations
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_ForeignIncomeTaxExpenseBenefitContinuingOperations
+
+#### us-gaap_FederalIncomeTaxExpenseBenefitContinuingOperations
+
+- us-gaap_FederalIncomeTaxExpenseBenefitContinuingOperations + us-gaap_CurrentFederalTaxExpenseBenefit
+- us-gaap_FederalIncomeTaxExpenseBenefitContinuingOperations + us-gaap_DeferredFederalIncomeTaxExpenseBenefit
+
+#### us-gaap_StateAndLocalIncomeTaxExpenseBenefitContinuingOperations
+
+- us-gaap_StateAndLocalIncomeTaxExpenseBenefitContinuingOperations + us-gaap_CurrentStateAndLocalTaxExpenseBenefit
+- us-gaap_StateAndLocalIncomeTaxExpenseBenefitContinuingOperations + us-gaap_DeferredStateAndLocalIncomeTaxExpenseBenefit
+
+#### us-gaap_ForeignIncomeTaxExpenseBenefitContinuingOperations
+
+- us-gaap_ForeignIncomeTaxExpenseBenefitContinuingOperations + us-gaap_CurrentForeignTaxExpenseBenefit
+- us-gaap_ForeignIncomeTaxExpenseBenefitContinuingOperations + us-gaap_DeferredForeignIncomeTaxExpenseBenefit
+
+### IncomeTaxesReconciliationOfProvisionForIncomeTaxesDetails
+
+#### us-gaap_IncomeTaxExpenseBenefit
+
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_IncomeTaxReconciliationIncomeTaxExpenseBenefitAtFederalStatutoryIncomeTaxRate
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_IncomeTaxReconciliationStateAndLocalIncomeTaxes
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_EffectiveIncomeTaxRateReconciliationTaxCutsAndJobsActOf2017Amount
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_IncomeTaxReconciliationForeignIncomeTaxRateDifferential
+- us-gaap_IncomeTaxExpenseBenefit - us-gaap_IncomeTaxReconciliationTaxCreditsResearch
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_EffectiveIncomeTaxRateReconciliationShareBasedCompensationExcessTaxBenefitAmount
+- us-gaap_IncomeTaxExpenseBenefit + us-gaap_IncomeTaxReconciliationOtherAdjustments
+
+### IncomeTaxesSignificantComponentsOfDeferredTaxAssetsAndLiabilitiesDetails
+
+#### us-gaap_DeferredTaxAssetsLiabilitiesNet
+
+- us-gaap_DeferredTaxAssetsLiabilitiesNet + us-gaap_DeferredTaxAssetsNet
+- us-gaap_DeferredTaxAssetsLiabilitiesNet - us-gaap_DeferredIncomeTaxLiabilities
+
+#### us-gaap_DeferredTaxAssetsNet
+
+- us-gaap_DeferredTaxAssetsNet + us-gaap_DeferredTaxAssetsGoodwillAndIntangibleAssets
+- us-gaap_DeferredTaxAssetsNet + us-gaap_DeferredTaxAssetsTaxDeferredExpenseReservesAndAccruals
+- us-gaap_DeferredTaxAssetsNet + us-gaap_DeferredTaxAssetsDeferredIncome
+- us-gaap_DeferredTaxAssetsNet + us-gaap_DeferredTaxAssetsTaxDeferredExpenseCompensationAndBenefitsShareBasedCompensationCost
+- us-gaap_DeferredTaxAssetsNet + us-gaap_DeferredTaxAssetsUnrealizedLossesOnAvailableforSaleSecuritiesGross
+- us-gaap_DeferredTaxAssetsNet + us-gaap_DeferredTaxAssetsOther
+- us-gaap_DeferredTaxAssetsNet + us-gaap_DeferredTaxAssetsPropertyPlantAndEquipment
+
+#### us-gaap_DeferredIncomeTaxLiabilities
+
+- us-gaap_DeferredIncomeTaxLiabilities + aapl_DeferredTaxLiabilitiesMinimumTaxonForeignEarnings
+- us-gaap_DeferredIncomeTaxLiabilities + us-gaap_DeferredTaxLiabilitiesUndistributedForeignEarnings
+- us-gaap_DeferredIncomeTaxLiabilities + us-gaap_DeferredTaxLiabilitiesOther
+
+### SummaryOfSignificantAccountingPoliciesComputationOfBasicAndDilutedEarningsPerShareDetails
+
+#### us-gaap_WeightedAverageNumberOfDilutedSharesOutstanding
+
+- us-gaap_WeightedAverageNumberOfDilutedSharesOutstanding + us-gaap_WeightedAverageNumberOfSharesOutstandingBasic
+- us-gaap_WeightedAverageNumberOfDilutedSharesOutstanding + us-gaap_WeightedAverageNumberDilutedSharesOutstandingAdjustment
+
+## 资产负债表计算逻辑 (Balance Sheet Calculations)
+
+### ConsolidatedBalanceSheets
+
+#### us-gaap_LiabilitiesAndStockholdersEquity
+
+- us-gaap_LiabilitiesAndStockholdersEquity + us-gaap_Liabilities
+- us-gaap_LiabilitiesAndStockholdersEquity + us-gaap_CommitmentsAndContingencies
+- us-gaap_LiabilitiesAndStockholdersEquity + us-gaap_StockholdersEquity
+
+#### us-gaap_Liabilities
+
+- us-gaap_Liabilities + us-gaap_LiabilitiesCurrent
+- us-gaap_Liabilities + us-gaap_LiabilitiesNoncurrent
+
+#### us-gaap_LiabilitiesCurrent
+
+- us-gaap_LiabilitiesCurrent + us-gaap_AccountsPayableCurrent
+- us-gaap_LiabilitiesCurrent + us-gaap_OtherLiabilitiesCurrent
+- us-gaap_LiabilitiesCurrent + us-gaap_ContractWithCustomerLiabilityCurrent
+- us-gaap_LiabilitiesCurrent + us-gaap_CommercialPaper
+- us-gaap_LiabilitiesCurrent + us-gaap_LongTermDebtCurrent
+
+#### us-gaap_LiabilitiesNoncurrent
+
+- us-gaap_LiabilitiesNoncurrent + us-gaap_LongTermDebtNoncurrent
+- us-gaap_LiabilitiesNoncurrent + us-gaap_OtherLiabilitiesNoncurrent
+
+#### us-gaap_StockholdersEquity
+
+- us-gaap_StockholdersEquity + us-gaap_CommonStocksIncludingAdditionalPaidInCapital
+- us-gaap_StockholdersEquity + us-gaap_RetainedEarningsAccumulatedDeficit
+- us-gaap_StockholdersEquity + us-gaap_AccumulatedOtherComprehensiveIncomeLossNetOfTax
+
+#### us-gaap_Assets
+
+- us-gaap_Assets + us-gaap_AssetsCurrent
+- us-gaap_Assets + us-gaap_AssetsNoncurrent
+
+#### us-gaap_AssetsCurrent
+
+- us-gaap_AssetsCurrent + us-gaap_CashAndCashEquivalentsAtCarryingValue
+- us-gaap_AssetsCurrent + us-gaap_MarketableSecuritiesCurrent
+- us-gaap_AssetsCurrent + us-gaap_AccountsReceivableNetCurrent
+- us-gaap_AssetsCurrent + us-gaap_InventoryNet
+- us-gaap_AssetsCurrent + us-gaap_NontradeReceivablesCurrent
+- us-gaap_AssetsCurrent + us-gaap_OtherAssetsCurrent
+
+#### us-gaap_AssetsNoncurrent
+
+- us-gaap_AssetsNoncurrent + us-gaap_MarketableSecuritiesNoncurrent
+- us-gaap_AssetsNoncurrent + us-gaap_PropertyPlantAndEquipmentNet
+- us-gaap_AssetsNoncurrent + us-gaap_OtherAssetsNoncurrent
+
+### FinancialInstrumentsMarketableSecuritiesInContinuousUnrealizedLossPositionDetails
+
+#### us-gaap_DebtSecuritiesAvailableForSaleUnrealizedLossPosition
+
+- us-gaap_DebtSecuritiesAvailableForSaleUnrealizedLossPosition + us-gaap_DebtSecuritiesAvailableForSaleContinuousUnrealizedLossPositionLessThan12Months
+- us-gaap_DebtSecuritiesAvailableForSaleUnrealizedLossPosition + us-gaap_DebtSecuritiesAvailableForSaleContinuousUnrealizedLossPosition12MonthsOrLonger
+
+#### us-gaap_DebtSecuritiesAvailableForSaleUnrealizedLossPositionAccumulatedLoss
+
+- us-gaap_DebtSecuritiesAvailableForSaleUnrealizedLossPositionAccumulatedLoss + us-gaap_DebtSecuritiesAvailableForSaleContinuousUnrealizedLossPositionLessThan12MonthsAccumulatedLoss
+- us-gaap_DebtSecuritiesAvailableForSaleUnrealizedLossPositionAccumulatedLoss + us-gaap_DebtSecuritiesAvailableForSaleContinuousUnrealizedLossPosition12MonthsOrLongerAccumulatedLoss
+
+## 现金流量表计算逻辑 (Cash Flow Calculations)
+
+### ConsolidatedStatementsOfCashFlows
+
+#### us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect
+
+- us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect + us-gaap_NetCashProvidedByUsedInOperatingActivities
+- us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect + us-gaap_NetCashProvidedByUsedInInvestingActivities
+- us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect + us-gaap_NetCashProvidedByUsedInFinancingActivities
+
+#### us-gaap_NetCashProvidedByUsedInOperatingActivities
+
+- us-gaap_NetCashProvidedByUsedInOperatingActivities + us-gaap_NetIncomeLoss
+- us-gaap_NetCashProvidedByUsedInOperatingActivities + us-gaap_DepreciationDepletionAndAmortization
+- us-gaap_NetCashProvidedByUsedInOperatingActivities + us-gaap_ShareBasedCompensation
+- us-gaap_NetCashProvidedByUsedInOperatingActivities + us-gaap_DeferredIncomeTaxExpenseBenefit
+- us-gaap_NetCashProvidedByUsedInOperatingActivities - us-gaap_OtherNoncashIncomeExpense
+- us-gaap_NetCashProvidedByUsedInOperatingActivities - us-gaap_IncreaseDecreaseInAccountsReceivable
+- us-gaap_NetCashProvidedByUsedInOperatingActivities - us-gaap_IncreaseDecreaseInInventories
+- us-gaap_NetCashProvidedByUsedInOperatingActivities - us-gaap_IncreaseDecreaseInOtherReceivables
+- us-gaap_NetCashProvidedByUsedInOperatingActivities - us-gaap_IncreaseDecreaseInOtherOperatingAssets
+- us-gaap_NetCashProvidedByUsedInOperatingActivities + us-gaap_IncreaseDecreaseInAccountsPayable
+- us-gaap_NetCashProvidedByUsedInOperatingActivities + us-gaap_IncreaseDecreaseInContractWithCustomerLiability
+- us-gaap_NetCashProvidedByUsedInOperatingActivities + us-gaap_IncreaseDecreaseInOtherOperatingLiabilities
+
+#### us-gaap_NetCashProvidedByUsedInInvestingActivities
+
+- us-gaap_NetCashProvidedByUsedInInvestingActivities - us-gaap_PaymentsToAcquireAvailableForSaleSecuritiesDebt
+- us-gaap_NetCashProvidedByUsedInInvestingActivities + us-gaap_ProceedsFromMaturitiesPrepaymentsAndCallsOfAvailableForSaleSecurities
+- us-gaap_NetCashProvidedByUsedInInvestingActivities + us-gaap_ProceedsFromSaleOfAvailableForSaleSecuritiesDebt
+- us-gaap_NetCashProvidedByUsedInInvestingActivities - us-gaap_PaymentsToAcquireBusinessesNetOfCashAcquired
+- us-gaap_NetCashProvidedByUsedInInvestingActivities - us-gaap_PaymentsToAcquirePropertyPlantAndEquipment
+- us-gaap_NetCashProvidedByUsedInInvestingActivities - us-gaap_PaymentsForProceedsFromOtherInvestingActivities
+- us-gaap_NetCashProvidedByUsedInInvestingActivities - us-gaap_PaymentsToAcquireOtherInvestments
+- us-gaap_NetCashProvidedByUsedInInvestingActivities + us-gaap_ProceedsFromSaleAndMaturityOfOtherInvestments
+
+#### us-gaap_NetCashProvidedByUsedInFinancingActivities
+
+- us-gaap_NetCashProvidedByUsedInFinancingActivities + us-gaap_ProceedsFromIssuanceOfCommonStock
+- us-gaap_NetCashProvidedByUsedInFinancingActivities - us-gaap_PaymentsRelatedToTaxWithholdingForShareBasedCompensation
+- us-gaap_NetCashProvidedByUsedInFinancingActivities - us-gaap_PaymentsOfDividends
+- us-gaap_NetCashProvidedByUsedInFinancingActivities - us-gaap_PaymentsForRepurchaseOfCommonStock
+- us-gaap_NetCashProvidedByUsedInFinancingActivities + us-gaap_ProceedsFromIssuanceOfLongTermDebt
+- us-gaap_NetCashProvidedByUsedInFinancingActivities + us-gaap_ProceedsFromRepaymentsOfCommercialPaper
+- us-gaap_NetCashProvidedByUsedInFinancingActivities - us-gaap_RepaymentsOfLongTermDebt
+- us-gaap_NetCashProvidedByUsedInFinancingActivities + us-gaap_ProceedsFromPaymentsForOtherFinancingActivities
+
+### DebtSummaryOfCashFlowsAssociatedWithCommercialPaperDetails
+
+#### us-gaap_ProceedsFromRepaymentsOfCommercialPaper
+
+- us-gaap_ProceedsFromRepaymentsOfCommercialPaper + us-gaap_ProceedsFromRepaymentsOfShortTermDebtMaturingInThreeMonthsOrLess
+- us-gaap_ProceedsFromRepaymentsOfCommercialPaper + us-gaap_ProceedsFromRepaymentsOfShortTermDebtMaturingInMoreThanThreeMonths
+
+#### us-gaap_ProceedsFromRepaymentsOfShortTermDebtMaturingInMoreThanThreeMonths
+
+- us-gaap_ProceedsFromRepaymentsOfShortTermDebtMaturingInMoreThanThreeMonths + us-gaap_ProceedsFromShortTermDebtMaturingInMoreThanThreeMonths
+- us-gaap_ProceedsFromRepaymentsOfShortTermDebtMaturingInMoreThanThreeMonths - us-gaap_RepaymentsOfShortTermDebtMaturingInMoreThanThreeMonths
+
+### FinancialInstrumentsCashCashEquivalentsAndMarketableSecuritiesDetails
+
+#### us-gaap_AvailableForSaleDebtSecuritiesAmortizedCostBasis
+
+- us-gaap_AvailableForSaleDebtSecuritiesAmortizedCostBasis - us-gaap_AvailableForSaleDebtSecuritiesAccumulatedGrossUnrealizedGainBeforeTax
+- us-gaap_AvailableForSaleDebtSecuritiesAmortizedCostBasis + us-gaap_AvailableForSaleDebtSecuritiesAccumulatedGrossUnrealizedLossBeforeTax
+- us-gaap_AvailableForSaleDebtSecuritiesAmortizedCostBasis + us-gaap_AvailableForSaleSecuritiesDebtSecurities
+
+#### us-gaap_AvailableForSaleSecuritiesDebtSecurities
+
+- us-gaap_AvailableForSaleSecuritiesDebtSecurities + us-gaap_CashAndCashEquivalentsAtCarryingValue
+- us-gaap_AvailableForSaleSecuritiesDebtSecurities + us-gaap_MarketableSecuritiesCurrent
+- us-gaap_AvailableForSaleSecuritiesDebtSecurities + us-gaap_MarketableSecuritiesNoncurrent
+
+### FinancialInstrumentsRestrictedCashDetails
+
+#### us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents
+
+- us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents + us-gaap_CashAndCashEquivalentsAtCarryingValue
+- us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents + us-gaap_RestrictedCashAndCashEquivalentsAtCarryingValue
+- us-gaap_CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents + us-gaap_RestrictedCashAndCashEquivalentsNoncurrent
+
+## 主要计算公式总结
+
