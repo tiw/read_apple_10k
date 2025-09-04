@@ -52,7 +52,8 @@ class ValidationOrchestrator:
                               xbrl_data: Dict[str, Any],
                               company_info: Dict[str, Any],
                               historical_data: List[Dict[str, Any]] = None,
-                              sec_accession_number: str = None) -> Dict[str, Any]:
+                              sec_accession_number: str = None,
+                              sec_api_client = None) -> Dict[str, Any]:
         """
         执行完整的XBRL文档验证
         
@@ -95,10 +96,41 @@ class ValidationOrchestrator:
                 'warnings': internal_result.warnings
             }
             
-            # 2. SEC外部数据验证（如果提供了文件编号）
+            # 2. SEC外部数据验证（优先使用API，其次是文件数据）
             sec_validation_result = None
-            if sec_accession_number and cik:
-                logger.info("执行SEC外部数据验证...")
+            sec_api_validation_result = None
+            
+            # 2a. SEC API验证（如果提供了API客户端）
+            if sec_api_client and cik:
+                logger.info("执行SEC API数据验证...")
+                try:
+                    api_comparison = self.sec_validator.validate_against_sec_api_data(
+                        xbrl_data=xbrl_data,
+                        sec_api_client=sec_api_client,
+                        company_cik=cik,
+                        fiscal_year=fiscal_year,
+                        report_type='10-K'
+                    )
+                    
+                    if api_comparison and api_comparison['api_match_rate'] > 0:
+                        validation_summary['validation_components']['sec_api_external'] = {
+                            'match_rate': api_comparison['api_match_rate'],
+                            'matches': len(api_comparison['api_matches']),
+                            'mismatches': len(api_comparison['api_mismatches']),
+                            'missing_in_api': len(api_comparison['missing_in_api']),
+                            'query_success_rate': sum(1 for q in api_comparison.get('api_query_details', []) if q.get('query_successful', False)) / len(api_comparison.get('api_query_details', [])) if api_comparison.get('api_query_details') else 0,
+                            'comparison_details': api_comparison
+                        }
+                        sec_api_validation_result = api_comparison
+                        logger.info(f"SEC API验证完成，匹配率: {api_comparison['api_match_rate']:.1%}")
+                    else:
+                        logger.warning("SEC API验证未返回有效数据")
+                except Exception as e:
+                    logger.error(f"SEC API验证失败: {e}")
+            
+            # 2b. SEC文件数据验证（如果提供了文件编号且API验证失败）
+            if sec_accession_number and cik and not sec_api_validation_result:
+                logger.info("执行SEC文件数据验证...")
                 try:
                     sec_data = self.sec_validator.get_sec_filing_data(cik, sec_accession_number)
                     if sec_data:
@@ -112,9 +144,9 @@ class ValidationOrchestrator:
                         }
                         sec_validation_result = sec_comparison
                     else:
-                        logger.warning("无法获取SEC数据进行对比")
+                        logger.warning("无法获取SEC文件数据进行对比")
                 except Exception as e:
-                    logger.error(f"SEC验证失败: {e}")
+                    logger.error(f"SEC文件验证失败: {e}")
             
             # 3. 历史趋势验证（如果有历史数据）
             historical_analysis = None
@@ -173,9 +205,10 @@ class ValidationOrchestrator:
         """计算总体置信度分数"""
         confidence_scores = []
         weights = {
-            'internal_consistency': 0.5,
-            'sec_external': 0.3,
-            'historical_trends': 0.2
+            'internal_consistency': 0.4,
+            'sec_api_external': 0.3,
+            'sec_external': 0.2,
+            'historical_trends': 0.1
         }
         
         for component_name, weight in weights.items():
@@ -184,6 +217,12 @@ class ValidationOrchestrator:
                 
                 if component_name == 'internal_consistency':
                     confidence_scores.append(component['confidence_score'] * weight)
+                elif component_name == 'sec_api_external':
+                    # API验证的权重基于匹配率和查询成功率
+                    match_rate = component['match_rate']
+                    query_success_rate = component.get('query_success_rate', 1.0)
+                    api_score = (match_rate * 0.7 + query_success_rate * 0.3) * weight
+                    confidence_scores.append(api_score)
                 elif component_name == 'sec_external':
                     confidence_scores.append(component['match_rate'] * weight)
                 elif component_name == 'historical_trends':
@@ -282,7 +321,13 @@ class ValidationOrchestrator:
             if internal.get('errors'):
                 recommendations.append("重点关注内部一致性问题，检查数据计算逻辑")
         
-        if 'sec_external' in components:
+        if 'sec_api_external' in components:
+            sec_api = components['sec_api_external']
+            if sec_api.get('match_rate', 0) < 0.8:
+                recommendations.append("SEC API数据匹配度较低，建议检查解析精度")
+            elif sec_api.get('query_success_rate', 1.0) < 0.7:
+                recommendations.append("SEC API查询成功率较低，可能影响验证准确性")
+        elif 'sec_external' in components:
             sec = components['sec_external']
             if sec.get('match_rate', 0) < 0.8:
                 recommendations.append("SEC数据匹配度较低，建议检查解析精度")
@@ -353,7 +398,9 @@ class ValidationOrchestrator:
         if 'internal_consistency' in components:
             report.append(self._generate_internal_section(components['internal_consistency']))
         
-        if 'sec_external' in components:
+        if 'sec_api_external' in components:
+            report.append(self._generate_sec_api_section(components['sec_api_external']))
+        elif 'sec_external' in components:
             report.append(self._generate_sec_section(components['sec_external']))
         
         if 'historical_trends' in components:
@@ -429,6 +476,54 @@ class ValidationOrchestrator:
             section.append("### 警告")
             for warning in internal_data['warnings']:
                 section.append(f"- ⚠️ {warning}")
+            section.append("")
+        
+        return "\n".join(section)
+    
+    def _generate_sec_api_section(self, sec_api_data: Dict[str, Any]) -> str:
+        """生成SEC API验证部分"""
+        section = ["## 🌐 SEC API数据验证"]
+        section.append("")
+        
+        match_rate = sec_api_data['match_rate']
+        query_success_rate = sec_api_data.get('query_success_rate', 1.0)
+        matches = sec_api_data['matches']
+        mismatches = sec_api_data['mismatches']
+        
+        section.append(f"**API数据匹配率**: {match_rate:.1%}")
+        section.append(f"**API查询成功率**: {query_success_rate:.1%}")
+        section.append(f"**匹配项数**: {matches}")
+        section.append(f"**不匹配项数**: {mismatches}")
+        section.append("")
+        
+        # API查询详情
+        query_details = sec_api_data.get('comparison_details', {}).get('api_query_details', [])
+        if query_details:
+            successful_queries = sum(1 for q in query_details if q.get('query_successful', False))
+            total_queries = len(query_details)
+            
+            section.append(f"### API查询统计")
+            section.append(f"- 总查询次数: {total_queries}")
+            section.append(f"- 成功查询: {successful_queries}")
+            section.append(f"- 失败查询: {total_queries - successful_queries}")
+            section.append("")
+            
+            # 失败查询
+            failed_queries = [q for q in query_details if not q.get('query_successful', False)]
+            if failed_queries:
+                section.append("### API查询失败项")
+                for query in failed_queries[:5]:  # 显示前5个
+                    section.append(f"- {query['concept']} -> {query['api_concept']}: {query['reason']}")
+                section.append("")
+        
+        # 不匹配项详情
+        if mismatches > 0:
+            section.append("### 主要不匹配项")
+            comparison = sec_api_data['comparison_details']
+            for mismatch in comparison['api_mismatches'][:5]:  # 显示前5个
+                concept = mismatch['concept']
+                diff_pct = mismatch['relative_difference'] * 100
+                section.append(f"- {concept}: 差异 {diff_pct:.1f}%")
             section.append("")
         
         return "\n".join(section)
