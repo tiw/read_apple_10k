@@ -239,6 +239,10 @@ class CompanyPreRelationshipAnalyzer:
                     concepts = self.extract_all_concepts(cat2[role])
                     changes['concept_changes']['added'].extend([(role, concept) for concept in concepts])
         
+        # Analyze specific metric changes
+        metric_changes = self.analyze_specific_metric_changes(rel1, rel2)
+        changes['metric_changes'] = metric_changes
+        
         return changes
     
     def extract_all_concepts(self, hierarchy):
@@ -288,6 +292,94 @@ class CompanyPreRelationshipAnalyzer:
                 differences.append(f"{concept}: added")
         
         return differences
+    
+    def analyze_specific_metric_changes(self, rel1, rel2):
+        """分析具体财务指标的变化"""
+        # Extract all unique concepts from both years
+        concepts1 = set()
+        concepts2 = set()
+        
+        for category, roles in rel1.items():
+            for role, hierarchy in roles.items():
+                concepts1.update(self.extract_all_concepts(hierarchy))
+        
+        for category, roles in rel2.items():
+            for role, hierarchy in roles.items():
+                concepts2.update(self.extract_all_concepts(hierarchy))
+        
+        # Find new and removed metrics
+        new_metrics = concepts2 - concepts1
+        removed_metrics = concepts1 - concepts2
+        
+        # Find metrics with changed hierarchy structure
+        hierarchy_changes = []
+        
+        # Build hierarchy mappings for both years
+        hierarchy_map1 = self.build_hierarchy_map(rel1)
+        hierarchy_map2 = self.build_hierarchy_map(rel2)
+        
+        # Check for hierarchy changes in common metrics
+        common_metrics = concepts1 & concepts2
+        for metric in common_metrics:
+            if metric in hierarchy_map1 and metric in hierarchy_map2:
+                hierarchy1 = hierarchy_map1[metric]
+                hierarchy2 = hierarchy_map2[metric]
+                
+                if hierarchy1 != hierarchy2:
+                    # Find what changed
+                    changes = []
+                    
+                    # Check for parent changes
+                    parent1 = hierarchy1.get('parent')
+                    parent2 = hierarchy2.get('parent')
+                    if parent1 != parent2:
+                        changes.append(f"父概念变化: {parent1} → {parent2}")
+                    
+                    # Check for role changes
+                    role1 = hierarchy1.get('role')
+                    role2 = hierarchy2.get('role')
+                    if role1 != role2:
+                        role_name1 = role1.split('/')[-1] if '/' in role1 else role1
+                        role_name2 = role2.split('/')[-1] if '/' in role2 else role2
+                        changes.append(f"角色变化: {role_name1} → {role_name2}")
+                    
+                    # Check for level changes
+                    level1 = hierarchy1.get('level', 0)
+                    level2 = hierarchy2.get('level', 0)
+                    if level1 != level2:
+                        changes.append(f"层级变化: {level1} → {level2}")
+                    
+                    # Check for total label changes
+                    is_total1 = hierarchy1.get('is_total', False)
+                    is_total2 = hierarchy2.get('is_total', False)
+                    if is_total1 != is_total2:
+                        changes.append(f"总计标签变化: {'是' if is_total1 else '否'} → {'是' if is_total2 else '否'}")
+                    
+                    if changes:
+                        hierarchy_changes.append((metric, changes))
+        
+        return {
+            'new_metrics': list(new_metrics),
+            'removed_metrics': list(removed_metrics),
+            'hierarchy_changes': hierarchy_changes
+        }
+    
+    def build_hierarchy_map(self, relationships):
+        """构建指标到层级结构的映射"""
+        hierarchy_map = {}
+        
+        for category, roles in relationships.items():
+            for role, hierarchy in roles.items():
+                for concept, data in hierarchy.items():
+                    hierarchy_map[concept] = {
+                        'parent': data.get('parent'),
+                        'role': role,
+                        'level': data.get('level', 0),
+                        'is_total': data.get('is_total', False),
+                        'category': category
+                    }
+        
+        return hierarchy_map
     
     def calculate_statistics(self, relationships):
         """计算关系统计信息"""
@@ -355,6 +447,31 @@ class CompanyPreRelationshipAnalyzer:
                     elif change_data.get('status') == 'removed':
                         role_name = role.split('/')[-1] if '/' in role else role
                         print(f"  {category}/{role_name}: 删除角色")
+        
+        # Print specific metric changes
+        metric_changes = changes.get('metric_changes', {})
+        if metric_changes.get('new_metrics'):
+            print(f"\n新增的财务指标:")
+            for metric in metric_changes['new_metrics'][:5]:
+                print(f"  + {metric}")
+            if len(metric_changes['new_metrics']) > 5:
+                print(f"  ... 还有 {len(metric_changes['new_metrics']) - 5} 个")
+        
+        if metric_changes.get('removed_metrics'):
+            print(f"\n删除的财务指标:")
+            for metric in metric_changes['removed_metrics'][:5]:
+                print(f"  - {metric}")
+            if len(metric_changes['removed_metrics']) > 5:
+                print(f"  ... 还有 {len(metric_changes['removed_metrics']) - 5} 个")
+        
+        if metric_changes.get('hierarchy_changes'):
+            print(f"\n层级结构变化的指标:")
+            for metric, changes in metric_changes['hierarchy_changes'][:5]:
+                print(f"  ~ {metric}:")
+                for change in changes:
+                    print(f"    {change}")
+            if len(metric_changes['hierarchy_changes']) > 5:
+                print(f"  ... 还有 {len(metric_changes['hierarchy_changes']) - 5} 个")
         
         print()
     
@@ -577,6 +694,34 @@ class CompanyPreRelationshipAnalyzer:
                     report_content.append(f"- {category}: {cat1['concepts']} → {cat2['concepts']} 个概念 "
                                         f"({concepts_change:+d}), {cat1['roles']} → {cat2['roles']} 个角色 ({roles_change:+d})")
             report_content.append("")
+            
+            # Add detailed metric changes to report
+            metric_changes = change_data.get('metric_changes', {})
+            if metric_changes.get('new_metrics'):
+                report_content.append("#### 新增的财务指标\n")
+                for metric in metric_changes['new_metrics'][:10]:
+                    report_content.append(f"- {metric}")
+                if len(metric_changes['new_metrics']) > 10:
+                    report_content.append(f"- ... 还有 {len(metric_changes['new_metrics']) - 10} 个")
+                report_content.append("")
+            
+            if metric_changes.get('removed_metrics'):
+                report_content.append("#### 删除的财务指标\n")
+                for metric in metric_changes['removed_metrics'][:10]:
+                    report_content.append(f"- {metric}")
+                if len(metric_changes['removed_metrics']) > 10:
+                    report_content.append(f"- ... 还有 {len(metric_changes['removed_metrics']) - 10} 个")
+                report_content.append("")
+            
+            if metric_changes.get('hierarchy_changes'):
+                report_content.append("#### 层级结构变化的指标\n")
+                for metric, changes in metric_changes['hierarchy_changes'][:10]:
+                    report_content.append(f"- {metric}:")
+                    for change in changes:
+                        report_content.append(f"  - {change}")
+                if len(metric_changes['hierarchy_changes']) > 10:
+                    report_content.append(f"- ... 还有 {len(metric_changes['hierarchy_changes']) - 10} 个")
+                report_content.append("")
         
         # Concept evolution
         report_content.append("## 财务概念演变\n")

@@ -145,13 +145,17 @@ class CompanyCalculationChangeAnalyzer:
                     'count2': len(cat_set2)
                 }
             
+            # Analyze specific metric changes
+            metric_changes = self.analyze_specific_metric_changes(calc1, calc2)
+            
             changes[f"{year1}_{year2}"] = {
                 'added': list(added),
                 'removed': list(removed),
                 'common': list(common),
                 'total_count1': len(set1),
                 'total_count2': len(set2),
-                'category_changes': category_changes
+                'category_changes': category_changes,
+                'metric_changes': metric_changes
             }
             
             # Print summary
@@ -182,6 +186,30 @@ class CompanyCalculationChangeAnalyzer:
                 if len(removed) > 5:
                     print(f"  ... 还有 {len(removed) - 5} 个")
             
+            # Print specific metric changes
+            if metric_changes['new_metrics']:
+                print(f"\n新增的财务指标:")
+                for metric in metric_changes['new_metrics'][:5]:
+                    print(f"  + {metric}")
+                if len(metric_changes['new_metrics']) > 5:
+                    print(f"  ... 还有 {len(metric_changes['new_metrics']) - 5} 个")
+            
+            if metric_changes['removed_metrics']:
+                print(f"\n删除的财务指标:")
+                for metric in metric_changes['removed_metrics'][:5]:
+                    print(f"  - {metric}")
+                if len(metric_changes['removed_metrics']) > 5:
+                    print(f"  ... 还有 {len(metric_changes['removed_metrics']) - 5} 个")
+            
+            if metric_changes['formula_changes']:
+                print(f"\n计算公式变化的指标:")
+                for metric, formula_change_list in metric_changes['formula_changes'][:5]:
+                    print(f"  ~ {metric}:")
+                    for change in formula_change_list:
+                        print(f"    {change}")
+                if len(metric_changes['formula_changes']) > 5:
+                    print(f"  ... 还有 {len(metric_changes['formula_changes']) - 5} 个")
+            
             print()
         
         return changes
@@ -202,6 +230,81 @@ class CompanyCalculationChangeAnalyzer:
             key = f"{calc['from_concept']}_{calc['operator']}_{calc['to_concept']}"
             calc_set.add(key)
         return calc_set
+    
+    def analyze_specific_metric_changes(self, calc1, calc2):
+        """分析具体财务指标的变化"""
+        # Extract all unique concepts from both years
+        concepts1 = set()
+        concepts2 = set()
+        
+        for category, calcs in calc1.items():
+            for calc in calcs:
+                concepts1.add(calc['from_concept'])
+                concepts1.add(calc['to_concept'])
+        
+        for category, calcs in calc2.items():
+            for calc in calcs:
+                concepts2.add(calc['from_concept'])
+                concepts2.add(calc['to_concept'])
+        
+        # Find new and removed metrics
+        new_metrics = concepts2 - concepts1
+        removed_metrics = concepts1 - concepts2
+        
+        # Find metrics with changed calculation formulas
+        formula_changes = []
+        
+        # Build calculation mappings for both years
+        calc_map1 = self.build_calculation_map(calc1)
+        calc_map2 = self.build_calculation_map(calc2)
+        
+        # Check for formula changes in common metrics
+        common_metrics = concepts1 & concepts2
+        for metric in common_metrics:
+            if metric in calc_map1 and metric in calc_map2:
+                formulas1 = calc_map1[metric]
+                formulas2 = calc_map2[metric]
+                
+                if formulas1 != formulas2:
+                    # Find what changed
+                    formula_diffs = []
+                    
+                    # Check for new formulas
+                    for formula in formulas2:
+                        if formula not in formulas1:
+                            formula_diffs.append(f"新增计算: {formula}")
+                    
+                    # Check for removed formulas
+                    for formula in formulas1:
+                        if formula not in formulas2:
+                            formula_diffs.append(f"删除计算: {formula}")
+                    
+                    if formula_diffs:
+                        formula_changes.append((metric, formula_diffs))
+        
+        return {
+            'new_metrics': list(new_metrics),
+            'removed_metrics': list(removed_metrics),
+            'formula_changes': formula_changes
+        }
+    
+    def build_calculation_map(self, calculations):
+        """构建指标到计算公式的映射"""
+        calc_map = defaultdict(list)
+        
+        for category, calcs in calculations.items():
+            for calc in calcs:
+                from_concept = calc['from_concept']
+                to_concept = calc['to_concept']
+                formula = calc['formula']
+                role = calc['role']
+                
+                # Map from concept to its calculation
+                calc_map[from_concept].append(f"{role}: {formula}")
+                # Map to concept to its calculation
+                calc_map[to_concept].append(f"{role}: {formula}")
+        
+        return calc_map
     
     def analyze_concept_evolution(self):
         """分析财务概念的演变"""
@@ -376,6 +479,34 @@ class CompanyCalculationChangeAnalyzer:
                     report_content.append(f"- {category}: {cat_change['count1']} → {cat_change['count2']} "
                                         f"(新增{len(cat_change['added'])}, 删除{len(cat_change['removed'])})")
             report_content.append("")
+            
+            # Add detailed metric changes to report
+            metric_changes = change_data.get('metric_changes', {})
+            if metric_changes.get('new_metrics'):
+                report_content.append("#### 新增的财务指标\n")
+                for metric in metric_changes['new_metrics'][:10]:
+                    report_content.append(f"- {metric}")
+                if len(metric_changes['new_metrics']) > 10:
+                    report_content.append(f"- ... 还有 {len(metric_changes['new_metrics']) - 10} 个")
+                report_content.append("")
+            
+            if metric_changes.get('removed_metrics'):
+                report_content.append("#### 删除的财务指标\n")
+                for metric in metric_changes['removed_metrics'][:10]:
+                    report_content.append(f"- {metric}")
+                if len(metric_changes['removed_metrics']) > 10:
+                    report_content.append(f"- ... 还有 {len(metric_changes['removed_metrics']) - 10} 个")
+                report_content.append("")
+            
+            if metric_changes.get('formula_changes'):
+                report_content.append("#### 计算公式变化的指标\n")
+                for metric, formula_change_list in metric_changes['formula_changes'][:10]:
+                    report_content.append(f"- {metric}:")
+                    for change in formula_change_list:
+                        report_content.append(f"  - {change}")
+                if len(metric_changes['formula_changes']) > 10:
+                    report_content.append(f"- ... 还有 {len(metric_changes['formula_changes']) - 10} 个")
+                report_content.append("")
         
         # Concept evolution
         report_content.append("## 财务概念演变\n")
